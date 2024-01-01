@@ -1,4 +1,6 @@
 # 3장 함수
+>대가 프로그래머는 시스템을 (구현할) 프로그램이아니라 (풀어갈) 이야기로 여긴다
+우리가 작성하는 함수가 분명하고 정확한 언어로 깔끔하게 같이 맞아떨어져야 이야기를 풀어가기 쉬워진다
 <hr>
 
 #### 작게 만들어라!
@@ -41,29 +43,77 @@ throws InvalidEmployeeType {
 ```
 * 위 함수는 길고, '한 가지' 작업만 수행하지 않으며 SRP, OCP를 위반한다
 * switch문을 추상 팩토리에 숨기고 보여주지 않는다, 팩토리는 switch문을 사용해 적절한 Employee 파생 클래스의 인스턴스를 생성한다
+
+<br>
+
+#### 서술적인 이름을 사용하라!
+* 함수가 하는 일을 좀 더 잘 표현하는게 좋다
+ex) testableHtml -> SetupTeardownIncluder
+* 길고 서술적인 이름이 짧고 어려운 이름보다 좋다
+<br>
+
+#### 함수 인수
+* 함수에서 이상적인 인수 개수는 0개(무항), 그다음은 1개(단항), 2개(이항), 3개(삼항), 4개 이상(다항) 순이다
+* 인수로 넘기는 것은 코드를 읽는 사람이 그 인수를 알아야 하므로 편리하지 않음
+* **많이 쓰는 단항 형식**
+  * 인수를 1개를 넘기는 이유로 가장 흔한 이유는 
+    * 인수에 질문을 던지는 경우
+    * 인수를 뭔가로 변환해결과를 반환하는 경우
+    * 이벤트 함수(출력 인수는 없음)
+* **플래그 인수**
+  * 플래그 인수는 추하다. 함수로 부울 값을 넘기는 관례는 끔찍하다(함수가 한꺼번에 여러가지를 처리한다고 대놓고 표시하는 것)
+* **이항 함수**
+  * ```Point p = new Point(0, 0)```과 같은 형식이 아니면 인수가 2개인 함수는 이해하기 어려움(사용 자제)
+* **인수 목록**
+  * 인수 개수가 가변적인함수도 필요하다(대표적인 예가 String.format 메서드)
+* 동사와 키워드
+  * 함수의 의도나 인수의 순서와 의도를 제대로 표현하려면 좋은 함수 이름이 필수
+  * 단항 함수는 함수와 인수가 **동사/명사** 쌍으로 이뤄야 한다
+    * ex) write(name) -> writeField(name)
+  * 함수 이름에 키워드를 추가
+    * ex) assertEquals -> assertExpectedEqualsActual(expected, actual)
+<br>
+
+#### 부수 효과를 일으키지 마라!
+* 부수 효과는 거짓말이다. 예상치 못하게 클래스 변수를 수정하는 경우도 있음 이는 시간적인 결합이나 순서 종속성을 초래한다
+* **출력 인수**
+  * 객체지향 언어에서는 출력 인수를사용할 필요가 없다(출력 인수로 사용하라고 설계한 변수가 this임)
+  * 일반적으로 출력 인수는 피해야함. 함수에서 상태를 변경해야 한다면 함수가 속한 객체 상태를 변경하는 방식을 택해야함
+<br>
+
+#### 명령과 조회를 분리하라!
+* 함수는 뭔가를 수행하거나 뭔가에 답하거나 둘 중 하나만 해야한다(상태를 변경하거나 정보를 반환하거나)
 ```
-public abstract class Employee {
-    public abstract boolean isPayday();
-    public abstract Money calculatePay();
-    public abstract void deliverPay(Money pay);
-}
----------------------
-public interface EmployeeFactory {
-    public Employee makeEmployee(EmployeeRecord r) throws InvalidEmployeeType;
-}
----------------------
-public class EmployeeFactoryImpl implements EmployeeFactory {
-    public Employee makeEmployee(EmployeeRecord r) throws InvalidEmployeeType {
-        switch (r.type) {
-            case COMMISSIONED:
-                return new CommissionedEmployee(r);
-            case HOURLY:
-                return new HourlyEmployee(r);
-            case SALARIED:
-                return new SalariedEmployee(r);
-            default:
-                return new InvalidEmployeeType(r.type);
-        }
-    }
+public boolean set(String attribute, String value);
+.....
+if (set("username", "unclebob"))...
+```
+* 위의 코드를 읽으면 set이 설정되어있는 확인하는 코등니지 설정하는 코드인지 애매모호함, 이를 아래코드처럼 수정
+```
+if (attributeExists("username")) {
+    setAttribute("username", "unclebob");
+    ...
 }
 ```
+<br>
+
+#### 오류 코드보다 예외를 사용하라!
+* 오류 코드를 찾아서 오류를 출력하는 것 보단 예외를 사용하면 오류 처리코드가 원래코드에서 분리되므로 중복도 피하고 깔끔해진다
+* **오류 처리도 한 가지 작업이다**
+  * 오류를 검출하는 함수, 이를 제거하는 함수는 따로 있어야 한다다
+<br>
+
+#### 반복하지 마라!
+* 중복은 코드 길이가 늘어날 뿐 아니라 알고리즘이 변하면 바꿔야 하는 부분도 늘어남
+* 많은 원치과 기법이 중복을 없애거나 제어할 목적으로 나왔다 ex) 관계형 데이터 베이스에 정규 형식, 구조적 프로그래밍, AOP, COP등
+<br>
+
+#### 구조적 프로그래밍
+* 다익스트라(Dijkstra)는 모든 함수와 함수 내 모든 블록에 입구와 출구가 하나만 존재해야한다고 말했다
+  * 즉, 함수는 return 문이 하나여야 한다. 루프 안에서 break나 continue를 사용해선 안 되고 goto는 절대로 쓰면 안된다
+* 함수가 작다면 위 규칙은 별 이익을 얻지 못함. 함수가 아주 클 때만 상당한이익을 제공
+* 오히려 함수를 작게 만든다면 간혹 return, break, continue를 여러 차례 사용해도 괜찮음
+<br>
+
+#### 함수를 어떻게 짜죠?
+* 처음에는 길고 복잡하며 들여쓰기 단계도 많고 중복된 루프도 많지만 **코드를 다듬고, 함수를 만들고, 이름을 바꾸고, 중복을 제거한다. 메서드를 줄이고 순서를 바꾼다, 때로는 전체 클래스를 쪼개기도 한다. 이 와중에도 코드는 항상 단위 테스트를 통과한다**
